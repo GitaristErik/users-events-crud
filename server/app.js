@@ -9,6 +9,9 @@ var eventsRouter = require('./routes/events');
 
 var app = express();
 
+const cors = require('cors');
+app.use(cors());
+
 app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
@@ -19,8 +22,5 @@ app.use('/', indexRouter);
 app.use('/users', usersRouter);
 app.use('/api/users', usersRouter);
 app.use('/api/events', eventsRouter);
-
-const cors = require('cors');
-app.use(cors());
 
 module.exports = app;
