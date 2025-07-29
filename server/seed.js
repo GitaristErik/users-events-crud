@@ -1,132 +1,85 @@
+
 require('dotenv').config();
 const mongoose = require('mongoose');
+
+const bcrypt = require('bcryptjs');
 const User = require('./models/User');
+const SimpleUser = require('./models/SimpleUser');
 const Event = require('./models/Event');
+
+
+const DEMO_SIMPLE_USER_COUNT = 15;
+const DEMO_EVENT_COUNT = 35;
+
+const firstNames = ['John', 'Jane', 'Mike', 'Sarah', 'David', 'Emily', 'Alex', 'Olga', 'Ivan', 'Maria', 'Oleh', 'Anna', 'Max', 'Sofia', 'Dmytro'];
+const lastNames = ['Doe', 'Smith', 'Johnson', 'Wilson', 'Brown', 'Davis', 'Petrov', 'Kovalenko', 'Shevchenko', 'Bondarenko', 'Tkachenko', 'Melnyk', 'Kravchenko', 'Boyko', 'Moroz'];
+
+function getRandomItem(arr) {
+  return arr[Math.floor(Math.random() * arr.length)];
+}
+
+function getRandomDate() {
+  const now = Date.now();
+  // Від -10 до +20 днів від сьогодні
+  const offset = (Math.floor(Math.random() * 31) - 10) * 24 * 60 * 60 * 1000;
+  const start = new Date(now + offset);
+  const duration = (1 + Math.floor(Math.random() * 6)) * 60 * 60 * 1000; // 1-6 годин
+  return { start, end: new Date(start.getTime() + duration) };
+}
+
 
 async function seedDatabase() {
   try {
-    // Підключення до MongoDB
     await mongoose.connect(process.env.MONGO_URI);
     console.log('✅ Connected to MongoDB');
 
-    // Очищення існуючих даних
     await User.deleteMany({});
+    await SimpleUser.deleteMany({});
     await Event.deleteMany({});
     console.log('🗑️ Cleared existing data');
 
-    // Створення тестових користувачів
-    const users = await User.create([
-      {
-        firstName: 'John',
-        lastName: 'Doe',
-        email: 'john.doe@example.com',
-        phoneNumber: '+1234567890'
-      },
-      {
-        firstName: 'Jane',
-        lastName: 'Smith', 
-        email: 'jane.smith@example.com',
-        phoneNumber: '+1234567891'
-      },
-      {
-        firstName: 'Mike',
-        lastName: 'Johnson',
-        email: 'mike.johnson@example.com',
-        phoneNumber: '+1234567892'
-      },
-      {
-        firstName: 'Sarah',
-        lastName: 'Wilson',
-        email: 'sarah.wilson@example.com',
-        phoneNumber: '+1234567893'
-      },
-      {
-        firstName: 'David',
-        lastName: 'Brown',
-        email: 'david.brown@example.com',
-        phoneNumber: '+1234567894'
-      },
-      {
-        firstName: 'Emily',
-        lastName: 'Davis',
-        email: 'emily.davis@example.com',
-        phoneNumber: '+1234567895'
-      }
-    ]);
+    // Створюємо admin user
+    const admin = await User.create({
+      firstName: 'Admin',
+      lastName: 'User',
+      email: 'admin@example.com',
+      phoneNumber: '+10000000000',
+      password: "admin",
+      role: 'admin'
+    });
 
-    console.log(`✅ Created ${users.length} users`);
+    // Створюємо 10 simple users, owner: admin
+    const simpleUsersData = [];
+    for (let i = 1; i <= DEMO_SIMPLE_USER_COUNT; i++) {
+      const firstName = getRandomItem(firstNames);
+      const lastName = getRandomItem(lastNames);
+      simpleUsersData.push({
+        firstName,
+        lastName,
+        email: `simpleuser${i}@example.com`,
+        phoneNumber: `+1000000000${i}`,
+        owner: admin._id
+      });
+    }
+    const simpleUsers = await SimpleUser.insertMany(simpleUsersData);
+    console.log(`✅ Created 1 admin user and ${simpleUsers.length} simple users`);
 
-    // Створення тестових подій
-    const now = new Date();
-    const events = await Event.create([
-      {
-        userId: users[0]._id,
-        title: 'Team Meeting',
-        description: 'Weekly team synchronization meeting',
-        startDate: new Date(now.getTime() + 1 * 24 * 60 * 60 * 1000), // Tomorrow
-        endDate: new Date(now.getTime() + 1 * 24 * 60 * 60 * 1000 + 2 * 60 * 60 * 1000) // Tomorrow + 2 hours
-      },
-      {
-        userId: users[1]._id,
-        title: 'Project Presentation',
-        description: 'Quarterly project review presentation',
-        startDate: new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000), // In 3 days
-        endDate: new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000 + 3 * 60 * 60 * 1000) // In 3 days + 3 hours
-      },
-      {
-        userId: users[0]._id,
-        title: 'Client Call',
-        description: 'Important client discussion',
-        startDate: new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000), // Next week
-        endDate: new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000 + 1 * 60 * 60 * 1000) // Next week + 1 hour
-      },
-      {
-        userId: users[2]._id,
-        title: 'Training Session',
-        description: 'Technical skills development training',
-        startDate: new Date(now.getTime() + 10 * 24 * 60 * 60 * 1000), // In 10 days
-        endDate: new Date(now.getTime() + 10 * 24 * 60 * 60 * 1000 + 4 * 60 * 60 * 1000) // In 10 days + 4 hours
-      },
-      {
-        userId: users[1]._id,
-        title: 'Conference Call',
-        description: 'Monthly department conference',
-        startDate: new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000), // In 2 weeks
-        endDate: new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000 + 2 * 60 * 60 * 1000) // In 2 weeks + 2 hours
-      },
-      {
-        userId: users[3]._id,
-        title: 'Workshop',
-        description: 'Hands-on coding workshop',
-        startDate: new Date(now.getTime() + 21 * 24 * 60 * 60 * 1000), // In 3 weeks
-        endDate: new Date(now.getTime() + 21 * 24 * 60 * 60 * 1000 + 6 * 60 * 60 * 1000) // In 3 weeks + 6 hours
-      },
-      {
-        userId: users[4]._id,
-        title: 'Code Review',
-        description: 'Weekly code review session',
-        startDate: new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000), // 2 days ago (past event)
-        endDate: new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000 + 1 * 60 * 60 * 1000) // 2 days ago + 1 hour
-      },
-      {
-        userId: users[4]._id,
-        title: 'Product Demo',
-        description: 'Demonstration of new features',
-        startDate: new Date(now.getTime() + 5 * 24 * 60 * 60 * 1000), // In 5 days (future event)
-        endDate: new Date(now.getTime() + 5 * 24 * 60 * 60 * 1000 + 2 * 60 * 60 * 1000) // In 5 days + 2 hours
-      },
-      {
-        userId: users[5]._id,
-        title: 'Planning Session',
-        description: 'Sprint planning for next iteration',
-        startDate: new Date(now.getTime() - 5 * 24 * 60 * 60 * 1000), // 5 days ago (past event)
-        endDate: new Date(now.getTime() - 5 * 24 * 60 * 60 * 1000 + 3 * 60 * 60 * 1000) // 5 days ago + 3 hours
-      }
-    ]);
-
+    // Створюємо 30 івентів для випадкових simple users
+    const eventsData = [];
+    for (let i = 0; i < DEMO_EVENT_COUNT; i++) {
+      const simpleUser = getRandomItem(simpleUsers);
+      const { start, end } = getRandomDate();
+      eventsData.push({
+        userId: simpleUser._id,
+        title: `Demo Event #${i + 1}`,
+        description: `This is a demo event #${i + 1}`,
+        startDate: start,
+        endDate: end
+      });
+    }
+    const events = await Event.insertMany(eventsData);
     console.log(`✅ Created ${events.length} events`);
     console.log('🎉 Database seeded successfully!');
-
   } catch (error) {
     console.error('❌ Error seeding database:', error);
   } finally {
@@ -135,5 +88,4 @@ async function seedDatabase() {
   }
 }
 
-// Запуск seed функції
 seedDatabase();
