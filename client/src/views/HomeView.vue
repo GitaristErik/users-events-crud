@@ -8,7 +8,7 @@
         </div>
         <div class="page-actions">
           <button class="btn btn--primary" @click="showForm = !showForm">
-            {{ showForm ? '✕ Cancel' : '+ Create User' }}
+            {{ showForm ? '✕ Cancel' : (editingUser ? '✏️ Edit User' : '+ Create User') }}
           </button>
         </div>
       </div>
@@ -22,7 +22,12 @@
 
         <transition name="slide-fade">
           <div v-if="showForm" class="form-container">
-            <UserForm @created="fetchUsers" />
+            <UserForm
+              :editing-user="editingUser"
+              @created="handleUserCreated"
+              @updated="handleUserUpdated"
+              @cancelled="handleFormCancel"
+            />
           </div>
         </transition>
       </div>
@@ -62,6 +67,22 @@
               {{ item.eventsCount }}
             </span>
           </template>
+
+          <!-- Actions Column Template -->
+          <template #cell-actions="{ item }">
+            <div class="table-cell-actions">
+              <button @click="editUser(item.actions)" class="btn btn--icon btn--primary" title="Edit User">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
+                </svg>
+              </button>
+              <button @click="deleteUser(item.actions._id)" class="btn btn--icon btn--danger" title="Delete User">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
+                </svg>
+              </button>
+            </div>
+          </template>
         </TableUniversal>
       </div>
     </div>
@@ -73,14 +94,15 @@ import TableUniversal from '../components/TableUniversal.vue'
 import StatsCard from '../components/StatsCard.vue'
 import { useApi } from '@/composables/useApi'
 import { useErrorHandling } from '@/composables/useErrorHandling'
-import { formatDate, formatTime, showErrorMessage } from '../utils/helpers'
+import { formatDate, formatTime, showErrorMessage, showSuccessMessage } from '../utils/helpers'
 import { MESSAGES } from '../constants'
 
 const users = ref([])
 const showForm = ref(false)
+const editingUser = ref(null)
 
 // Composables
-const { fetchUsers: getUsers } = useApi()
+const { fetchUsers: getUsers, deleteUser: apiDeleteUser } = useApi()
 const { setApiError, clearErrors } = useErrorHandling()
 
 // Table Configuration
@@ -89,7 +111,8 @@ const usersColumns = [
   { field: 'email', label: '📧 Email', sortable: true },
   { field: 'phoneNumber', label: '📞 Phone', sortable: true },
   { field: 'eventsCount', label: '📅 Events', sortable: true },
-  { field: 'nextEventDate', label: '⏰ Next Event', sortable: true }
+  { field: 'nextEventDate', label: '⏰ Next Event', sortable: true },
+  { field: 'actions', label: '⚙️ Actions', sortable: false }
 ]
 
 // Table Data
@@ -101,7 +124,8 @@ const tableUsers = computed(() => {
     phoneNumber: user.phoneNumber,
     eventsCount: user.eventsCount || 0,
     nextEventDate: formatDate(user.nextEventDate),
-    nextEventDateRaw: user.nextEventDate // Raw date for template
+    nextEventDateRaw: user.nextEventDate, // Raw date for template
+    actions: user // Full user object for actions
   }))
 })
 
@@ -177,6 +201,42 @@ const totalEvents = computed(() => {
   return users.value.reduce((total, user) => total + (user.eventsCount || 0), 0)
 })
 
+// User management functions
+const editUser = (user) => {
+  editingUser.value = user
+  showForm.value = true
+}
+
+const deleteUser = async (userId) => {
+  const confirmed = window.confirm(MESSAGES.CONFIRM.DELETE_USER)
+  if (!confirmed) return
+
+  try {
+    await apiDeleteUser(userId)
+    await fetchUsers() // Refresh data
+    showSuccessMessage(MESSAGES.SUCCESS.USER_DELETED)
+  } catch (error) {
+    showErrorMessage(MESSAGES.ERROR.USER_DELETE_FAILED)
+  }
+}
+
+const handleUserCreated = () => {
+  showForm.value = false
+  editingUser.value = null
+  fetchUsers()
+}
+
+const handleUserUpdated = () => {
+  showForm.value = false
+  editingUser.value = null
+  fetchUsers()
+}
+
+const handleFormCancel = () => {
+  showForm.value = false
+  editingUser.value = null
+}
+
 onMounted(fetchUsers)
 </script>
 
@@ -194,6 +254,25 @@ onMounted(fetchUsers)
 .btn-events:hover {
   transform: translateY(-2px);
   box-shadow: 0 8px 15px rgba(245, 158, 11, 0.35);
+}
+
+/* Action buttons in table */
+.table-cell-actions {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+}
+
+.table-cell-actions .btn {
+  padding: 0.5rem;
+  min-width: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.table-cell-actions .btn:hover {
+  transform: translateY(-1px) scale(1.05);
 }
 
 /* Page-specific transition overrides */

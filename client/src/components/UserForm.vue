@@ -1,16 +1,16 @@
 <template>
   <div class="form-wrapper">
     <div class="form-header">
-      <h3 class="form-title">👤 Create New User</h3>
+      <h3 class="form-title">{{ formTitle }}</h3>
       <div class="form-divider"></div>
     </div>
 
     <!-- Error Messages -->
     <div v-if="hasErrors" class="message error">
-      <div class="error-main">{{ formattedErrors }}</div>
+      <div class="error-main">{{ errorMessage || 'Please fix the following errors:' }}</div>
       <ul v-if="errors.length > 0" class="error-details">
         <li v-for="error in errors" :key="error.field || error.message">
-          {{ error.field ? `${error.field}: ${error.message}` : error.message }}
+          <strong>{{ error.field || 'Field' }}:</strong> {{ error.message }}
         </li>
       </ul>
     </div>
@@ -18,7 +18,7 @@
     <!-- Success Message -->
     <div v-if="successMsg" class="message success">{{ successMsg }}</div>
 
-    <form @submit.prevent="createUser" class="modern-form">
+    <form @submit.prevent="submitHandler" class="modern-form">
       <div class="form-grid">
         <div class="input-group">
           <label for="firstName">First Name *</label>
@@ -27,10 +27,10 @@
             v-model="form.firstName"
             placeholder="Enter first name"
             required
-            class="form-input"
-            :class="{ 'form-input--error': hasFieldError('firstName') }"
+            :class="getFieldClass('firstName')"
+            @blur="v$.value.firstName.$touch()"
           />
-          <div v-if="hasFieldError('firstName')" class="field-error">
+          <div v-if="isFieldInvalid('firstName')" class="field-error">
             {{ getFieldError('firstName') }}
           </div>
         </div>
@@ -42,10 +42,10 @@
             v-model="form.lastName"
             placeholder="Enter last name"
             required
-            class="form-input"
-            :class="{ 'form-input--error': hasFieldError('lastName') }"
+            :class="getFieldClass('lastName')"
+            @blur="v$.value.lastName.$touch()"
           />
-          <div v-if="hasFieldError('lastName')" class="field-error">
+          <div v-if="isFieldInvalid('lastName')" class="field-error">
             {{ getFieldError('lastName') }}
           </div>
         </div>
@@ -58,10 +58,10 @@
             type="email"
             placeholder="Enter email address"
             required
-            class="form-input"
-            :class="{ 'form-input--error': hasFieldError('email') }"
+            :class="getFieldClass('email')"
+            @blur="v$.value.email.$touch()"
           />
-          <div v-if="hasFieldError('email')" class="field-error">
+          <div v-if="isFieldInvalid('email')" class="field-error">
             {{ getFieldError('email') }}
           </div>
         </div>
@@ -73,36 +73,46 @@
             v-model="form.phoneNumber"
             placeholder="Enter phone number"
             required
-            class="form-input"
-            :class="{ 'form-input--error': hasFieldError('phoneNumber') }"
+            :class="getFieldClass('phoneNumber')"
+            @blur="v$.value.phoneNumber.$touch()"
           />
-          <div v-if="hasFieldError('phoneNumber')" class="field-error">
+          <div v-if="isFieldInvalid('phoneNumber')" class="field-error">
             {{ getFieldError('phoneNumber') }}
           </div>
         </div>
       </div>
 
-      <button type="submit" class="btn btn--primary" :disabled="isSubmitting">
-        <span>{{ isSubmitting ? '⏳' : '✓' }}</span>
-        {{ isSubmitting ? 'Saving...' : 'Save User' }}
-      </button>
+      <div class="form-actions">
+        <button type="submit" class="btn btn--primary" :disabled="isSubmitting">
+          <span>{{ isSubmitting ? '⏳' : (isEditing ? '✏️' : '✓') }}</span>
+          {{ isSubmitting ? (isEditing ? 'Updating...' : 'Saving...') : submitButtonText }}
+        </button>
+
+        <button type="button" class="btn btn--secondary" @click="emit('cancelled')" :disabled="isSubmitting">
+          ✕ Cancel
+        </button>
+      </div>
     </form>
   </div>
 </template>
 
 <script setup>
-import { reactive, ref } from 'vue'
+import { reactive, ref, watch, computed } from 'vue'
 import { useApi } from '@/composables/useApi'
 import { useErrorHandling } from '@/composables/useErrorHandling'
-import { useFormValidation } from '@/composables/useFormValidation'
+import { useSimpleUserValidation } from '@/composables/useValidation'
 
-const emit = defineEmits(['created'])
+// Props
+const props = defineProps({
+  editingUser: {
+    type: Object,
+    default: null
+  }
+})
 
-// Composables
-const { createUser: apiCreateUser } = useApi()
-const { errors, errorMessage, hasErrors, formattedErrors, setApiError, clearErrors, getFieldError, hasFieldError } = useErrorHandling()
-const { validateUser, isFormValid } = useFormValidation()
+const emit = defineEmits(['created', 'updated', 'cancelled'])
 
+// Form reactive object
 const form = reactive({
   firstName: '',
   lastName: '',
@@ -110,36 +120,72 @@ const form = reactive({
   phoneNumber: ''
 })
 
+// Composables
+const { createUser: apiCreateUser, updateUser: apiUpdateUser } = useApi()
+const { errors, errorMessage, hasErrors, formattedErrors, setApiError, clearErrors } = useErrorHandling()
+const { v$, getErrorMessage, getFieldClass, getFieldError, isFieldValid, isFieldInvalid, isFormValid } = useSimpleUserValidation(form)
+
 const successMsg = ref('')
 const isSubmitting = ref(false)
 
+// Functions
 const resetForm = () => {
   Object.assign(form, { firstName: '', lastName: '', email: '', phoneNumber: '' })
   clearErrors()
   successMsg.value = ''
 }
 
-const createUserHandler = async () => {
+// Computed properties
+const isEditing = computed(() => !!props.editingUser)
+const formTitle = computed(() => isEditing.value ? '✏️ Edit User' : '👤 Create New User')
+const submitButtonText = computed(() => isEditing.value ? 'Update User' : 'Save User')
+
+// Watch for editing user changes
+watch(() => props.editingUser, (newUser) => {
+  if (newUser) {
+    Object.assign(form, {
+      firstName: newUser.firstName || '',
+      lastName: newUser.lastName || '',
+      email: newUser.email || '',
+      phoneNumber: newUser.phoneNumber || ''
+    })
+  } else {
+    resetForm()
+  }
+}, { immediate: true })
+
+const submitHandler = async () => {
   try {
     clearErrors()
     successMsg.value = ''
     isSubmitting.value = true
 
     // Validate form
-    const validationErrors = validateUser(form)
-    if (!isFormValid(validationErrors)) {
-      const errorList = Object.entries(validationErrors).map(([field, message]) => ({ field, message }))
+    v$.value.$touch()
+    if (!isFormValid.value) {
+      // Collect errors for display
+      const errorList = Object.keys(form).map(field => ({ field, message: getFieldError(field) })).filter(e => e.message)
       setApiError({ message: 'Please fix the following errors:', details: errorList })
       return
     }
 
-    await apiCreateUser(form)
-    successMsg.value = 'User created successfully!'
+    if (isEditing.value) {
+      await apiUpdateUser(props.editingUser._id, form)
+      successMsg.value = 'User updated successfully!'
 
-    setTimeout(() => {
-      resetForm()
-      emit('created')
-    }, 1500)
+      setTimeout(() => {
+        resetForm()
+        emit('updated')
+      }, 1500)
+    } else {
+      await apiCreateUser(form)
+      successMsg.value = 'User created successfully!'
+
+      setTimeout(() => {
+        resetForm()
+        emit('created')
+      }, 1500)
+    }
 
   } catch (error) {
     setApiError(error)
@@ -148,9 +194,8 @@ const createUserHandler = async () => {
   }
 }
 
-// Alias for template
-// Aliases
-const createUser = createUserHandler
+// Aliases for template
+const createUser = submitHandler
 </script>
 
 <style scoped>
@@ -198,9 +243,23 @@ const createUser = createUserHandler
   margin-bottom: var(--spacing-xs);
 }
 
+.form-actions {
+  display: flex;
+  gap: var(--spacing-md);
+  margin-top: var(--spacing-lg);
+}
+
+.form-actions .btn {
+  flex: 1;
+}
+
 @media (max-width: 768px) {
   .form-wrapper {
     margin: 0;
+  }
+
+  .form-actions {
+    flex-direction: column;
   }
 }
 </style>

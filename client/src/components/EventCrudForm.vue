@@ -34,10 +34,10 @@
           v-model="form.title"
           placeholder="Enter event title"
           required
-          class="form-input"
-          :class="{ 'form-input--error': hasFieldError('title') }"
+          :class="getFieldClass('title')"
+          @blur="v$.value.title.$touch()"
         />
-        <div v-if="hasFieldError('title')" class="field-error">
+        <div v-if="isFieldInvalid('title')" class="field-error">
           {{ getFieldError('title') }}
         </div>
       </div>
@@ -51,15 +51,15 @@
           id="userId"
           v-model="form.userId"
           required
-          class="form-select"
-          :class="{ 'form-input--error': hasFieldError('userId') }"
+          :class="getFieldClass('userId')"
+          @blur="v$.value.userId.$touch()"
         >
           <option value="" disabled>Select a user</option>
           <option v-for="user in users" :key="user._id" :value="user._id">
             {{ user.firstName }} {{ user.lastName }}
           </option>
         </select>
-        <div v-if="hasFieldError('userId')" class="field-error">
+        <div v-if="isFieldInvalid('userId')" class="field-error">
           {{ getFieldError('userId') }}
         </div>
       </div>
@@ -75,9 +75,9 @@
           placeholder="Event description (optional)"
           rows="3"
           class="form-textarea"
-          :class="{ 'form-input--error': hasFieldError('description') }"
+          :class="{ 'form-input--error': isFieldInvalid('description') }"
         ></textarea>
-        <div v-if="hasFieldError('description')" class="field-error">
+        <div v-if="isFieldInvalid('description')" class="field-error">
           {{ getFieldError('description') }}
         </div>
         <div class="field-hint">Maximum 500 characters</div>
@@ -93,11 +93,11 @@
             id="startDate"
             v-model="form.startDate"
             type="datetime-local"
+            class="form-input"
             required
-            class="form-input datetime-input"
-            :class="{ 'form-input--error': hasFieldError('startDate') }"
+            :class="{ 'form-input--error': isFieldInvalid('startDate') }"
           />
-          <div v-if="hasFieldError('startDate')" class="field-error">
+          <div v-if="isFieldInvalid('startDate')" class="field-error">
             {{ getFieldError('startDate') }}
           </div>
         </div>
@@ -110,11 +110,11 @@
             id="endDate"
             v-model="form.endDate"
             type="datetime-local"
+            class="form-input"
             required
-            class="form-input datetime-input"
-            :class="{ 'form-input--error': hasFieldError('endDate') }"
+            :class="{ 'form-input--error': isFieldInvalid('endDate') }"
           />
-          <div v-if="hasFieldError('endDate')" class="field-error">
+          <div v-if="isFieldInvalid('endDate')" class="field-error">
             {{ getFieldError('endDate') }}
           </div>
         </div>
@@ -140,7 +140,7 @@
 import { reactive, ref, watch, onMounted } from 'vue'
 import { useApi } from '@/composables/useApi'
 import { useErrorHandling } from '@/composables/useErrorHandling'
-import { useFormValidation } from '@/composables/useFormValidation'
+import { useEventValidation } from '@/composables/useValidation'
 
 const props = defineProps({
   users: Array,
@@ -150,11 +150,7 @@ const props = defineProps({
 
 const emit = defineEmits(['created', 'updated', 'cancelled'])
 
-// Composables
-const { createEvent, updateEvent } = useApi()
-const { errors, errorMessage, hasErrors, formattedErrors, setApiError, clearErrors, getFieldError, hasFieldError } = useErrorHandling()
-const { validateEvent, isFormValid } = useFormValidation()
-
+// Form reactive object
 const form = reactive({
   title: '',
   description: '',
@@ -162,6 +158,11 @@ const form = reactive({
   endDate: '',
   userId: ''
 })
+
+// Composables
+const { createEvent, updateEvent } = useApi()
+const { errors, errorMessage, hasErrors, formattedErrors, setApiError, clearErrors } = useErrorHandling()
+const { v$, getErrorMessage, getFieldClass, getFieldError, isFieldValid, isFieldInvalid, isFormValid } = useEventValidation(form)
 
 const successMsg = ref('')
 const isSubmitting = ref(false)
@@ -218,9 +219,10 @@ const submitEvent = async () => {
     isSubmitting.value = true
 
     // Validate form
-    const validationErrors = validateEvent(form)
-    if (!isFormValid(validationErrors)) {
-      const errorList = Object.entries(validationErrors).map(([field, message]) => ({ field, message }))
+    v$.value.$touch()
+    if (!isFormValid.value) {
+      // Collect errors for display
+      const errorList = Object.keys(form).map(field => ({ field, message: getFieldError(field) })).filter(e => e.message)
       setApiError({ message: 'Please fix the following errors:', details: errorList })
       return
     }
@@ -401,7 +403,7 @@ onMounted(() => {
   .form-group-row {
     grid-template-columns: 1fr;
   }
-  
+
   .form-actions {
     flex-direction: column;
   }

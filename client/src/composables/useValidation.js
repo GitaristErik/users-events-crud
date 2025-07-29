@@ -21,7 +21,6 @@ export function useProfileValidation(form) {
       nameValidator
     },
     lastName: {
-      required,
       minLength: minLength(2),
       nameValidator
     },
@@ -107,41 +106,13 @@ export function useProfileValidation(form) {
   }
 }
 
-export function useAuthValidation(form, isLogin = true) {
-  const rules = computed(() => {
-    if (isLogin) {
-      return {
-        email: { required, email },
-        password: { required }
-      }
-    }
 
-    return {
-      firstName: {
-        required,
-        minLength: minLength(2),
-        nameValidator
-      },
-      lastName: {
-        required,
-        minLength: minLength(2),
-        nameValidator
-      },
-      email: { required, email },
-      password: { required, passwordStrength },
-      confirmPassword: {
-        required,
-        sameAs: sameAs(form.password)
-      }
-    }
-  })
 
-  const v$ = useVuelidate(rules, form)
-
-  const getErrorMessage = (field) => {
+// --- Shared helpers ---
+function getErrorMessageFactory(v$, extra = {}) {
+  return (field) => {
     const fieldValidation = v$.value[field]
     if (!fieldValidation || !fieldValidation.$error) return ''
-
     if (fieldValidation.required && !fieldValidation.required.$response) {
       return `${field.charAt(0).toUpperCase() + field.slice(1)} is required`
     }
@@ -151,50 +122,132 @@ export function useAuthValidation(form, isLogin = true) {
     if (fieldValidation.minLength && !fieldValidation.minLength.$response) {
       return `Must be at least ${fieldValidation.minLength.$params.min} characters`
     }
-    if (fieldValidation.nameValidator && !fieldValidation.nameValidator.$response) {
-      return 'Only letters and spaces are allowed'
-    }
-    if (fieldValidation.passwordStrength && !fieldValidation.passwordStrength.$response) {
-      return 'Password must be at least 4 characters'
-    }
     if (fieldValidation.sameAs && !fieldValidation.sameAs.$response) {
       return 'Passwords do not match'
     }
-
+    if (extra.nameValidator && fieldValidation.nameValidator && !fieldValidation.nameValidator.$response) {
+      return 'Only letters and spaces are allowed'
+    }
+    if (extra.passwordStrength && fieldValidation.passwordStrength && !fieldValidation.passwordStrength.$response) {
+      return 'Password must be at least 4 characters'
+    }
     return 'Invalid value'
   }
+}
 
-  const isFieldValid = (field) => {
+function isFieldValidFactory(v$) {
+  return (field) => {
     const fieldValidation = v$.value[field]
     return fieldValidation && !fieldValidation.$error && fieldValidation.$dirty
   }
+}
 
-  const isFieldInvalid = (field) => {
+function isFieldInvalidFactory(v$) {
+  return (field) => {
     const fieldValidation = v$.value[field]
     return fieldValidation && fieldValidation.$error && fieldValidation.$dirty
   }
+}
 
-  const getFieldClass = (field) => {
+function getFieldClassFactory(v$) {
+  return (field) => {
     const fieldValidation = v$.value[field]
     const baseClass = 'form-input'
-
     if (!fieldValidation || !fieldValidation.$dirty) {
       return baseClass
     }
-
     if (fieldValidation.$error) {
       return `${baseClass} error`
     }
-
     return `${baseClass} success`
   }
+}
 
-  const getFieldError = (field) => getErrorMessage(field)
+function getFieldErrorFactory(getErrorMessage) {
+  return (field) => getErrorMessage(field)
+}
 
-  const isFormValid = computed(() => {
-    return !v$.value.$invalid
+function isFormValidFactory(v$) {
+  return computed(() => !v$.value.$invalid)
+}
+
+// --- Validation for User (auth) ---
+export function useAuthValidation(form, isLogin) {
+  const rules = computed(() => {
+    if (isLogin.value) {
+      return {
+        email: { required, email },
+        password: { required }
+      }
+    }
+    return {
+      firstName: { required, minLength: minLength(2) },
+      lastName: { minLength: minLength(2) },
+      email: { required, email },
+      password: { required, minLength: minLength(3) },
+      confirmPassword: { required, sameAs: sameAs(form.password) }
+    }
   })
+  const v$ = useVuelidate(rules, form)
+  const getErrorMessage = getErrorMessageFactory(v$)
+  const isFieldValid = isFieldValidFactory(v$)
+  const isFieldInvalid = isFieldInvalidFactory(v$)
+  const getFieldClass = getFieldClassFactory(v$)
+  const getFieldError = getFieldErrorFactory(getErrorMessage)
+  const isFormValid = isFormValidFactory(v$)
+  return {
+    v$,
+    getErrorMessage,
+    getFieldClass,
+    getFieldError,
+    isFieldValid,
+    isFieldInvalid,
+    isFormValid
+  }
+}
 
+// --- Validation for SimpleUser (no password, no confirmPassword, no role, no isActive) ---
+export function useSimpleUserValidation(form) {
+  const rules = computed(() => ({
+    firstName: { required, minLength: minLength(2) },
+    lastName: { minLength: minLength(2) },
+    email: { required, email },
+    phoneNumber: {}
+  }))
+  const v$ = useVuelidate(rules, form)
+  const getErrorMessage = getErrorMessageFactory(v$)
+  const isFieldValid = isFieldValidFactory(v$)
+  const isFieldInvalid = isFieldInvalidFactory(v$)
+  const getFieldClass = getFieldClassFactory(v$)
+  const getFieldError = getFieldErrorFactory(getErrorMessage)
+  const isFormValid = isFormValidFactory(v$)
+  return {
+    v$,
+    getErrorMessage,
+    getFieldClass,
+    getFieldError,
+    isFieldValid,
+    isFieldInvalid,
+    isFormValid
+  }
+}
+
+// --- Validation for Events ---
+export function useEventValidation(form) {
+  const rules = computed(() => ({
+    title: { required, minLength: minLength(3) },
+    description: {},
+    startDate: { required },
+    endDate: { required },
+    userId: { required }
+  }))
+  const v$ = useVuelidate(rules, form)
+  const getErrorMessage = getErrorMessageFactory(v$)
+  const isFieldValid = isFieldValidFactory(v$)
+  const isFieldInvalid = isFieldInvalidFactory(v$)
+  const getFieldClass = getFieldClassFactory(v$)
+  const getFieldError = getFieldErrorFactory(getErrorMessage)
+  const isFormValid = isFormValidFactory(v$)
   return {
     v$,
     getErrorMessage,

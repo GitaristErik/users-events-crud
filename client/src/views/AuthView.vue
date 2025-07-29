@@ -169,7 +169,7 @@
 
             <!-- Confirm Password field (register only) -->
             <transition name="slide-down">
-              <div v-if="!isLogin" class="form-group">
+              <div v-if="!isLogin && form.password" class="form-group">
                 <label for="confirmPassword">
                   <i class="icon">🔒</i>
                   Confirm Password
@@ -257,7 +257,7 @@ const form = reactive({
   confirmPassword: ''
 })
 
-const { v$, getErrorMessage, isFieldValid, isFieldInvalid } = useAuthValidation(form, isLogin)
+const { v$, getErrorMessage, isFieldValid, isFieldInvalid, getFieldClass, getFieldError } = useAuthValidation(form, isLogin)
 
 // Password strength calculator
 const passwordStrength = computed(() => {
