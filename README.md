@@ -1,6 +1,42 @@
-# 📅 Users & Events CRUD Application
 
-A modern full-stack CRUD application for managing users and events, built with Node.js/Express and Vue.js 3.
+
+> **Test task for ThinkMobiles**
+
+# Users & Events CRUD Application
+
+A modern full-stack CRUD application for managing users and events, built with Node.js/Express (backend) and Vue.js 3 (frontend).
+Features beautiful UI design, smooth animations, unique and stylish modal windows, responsive layout, and a fully functional mobile version for a modern user experience.
+
+## 🖼️ Preview & Demo Video
+
+
+<p align="center">
+  <img src="client/src/assets/preview.png" alt="Main app preview" width="700"/>
+</p>
+
+<p align="center">
+  <img src="client/src/assets/auth.png" alt="Login screen" width="340"/>
+  <img src="client/src/assets/auth2.png" alt="Register screen" width="340"/>
+</p>
+<p align="center">
+  <img src="client/src/assets/auth3.png" alt="Profile screen" width="700"/>
+</p>
+<p align="center">
+  <img src="client/src/assets/events.png" alt="Events screen" width="700"/>
+</p>
+<p align="center">
+  <img src="client/src/assets/user.png" alt="User's events screen" width="340"/>
+</p>
+
+**Demo video:**
+
+<p align="center">
+  <video src="client/src/assets/demo.mkv" controls width="700" poster="client/src/assets/preview.png">
+    Your browser does not support the video tag.
+  </video>
+</p>
+
+> _The video is located in `client/src/assets/demo.mkv`. If Markdown/README does not display the video, open the file directly or view it in the repository._
 
 ## 🚀 Features
 
@@ -23,10 +59,13 @@ A modern full-stack CRUD application for managing users and events, built with N
 - Event statistics and analytics
 
 ### 🎨 Modern UI/UX
-- Responsive design with Vue 3 Composition API
+- Beautiful and clean interface
+- Smooth page and component animations
+- Unique, stylish modal windows for forms and confirmations
+- Responsive, adaptive layout (desktop & mobile)
+- Fully functional mobile version
 - Real-time form validation
 - Loading states and error handling
-- Mobile-friendly interface
 
 ## 🛠️ Tech Stack
 
@@ -47,27 +86,57 @@ A modern full-stack CRUD application for managing users and events, built with N
 - **Axios** - HTTP client
 - **Vite** - Build tool
 
+
 ## 📁 Project Structure
 
 ```
-├── server/                 # Backend application
-│   ├── services/          # Business logic layer
-│   ├── routes/            # API routes
-│   ├── middleware/        # Custom middleware
-│   ├── models/           # Database models
-│   ├── config/           # Configuration files
-│   └── utils/            # Utility functions
+users-events-crud/
 │
-├── client/                # Frontend application
+├── server/                  # Backend (Node.js/Express)
+│   ├── app.js               # Main app entry
+│   ├── bin/www              # Server start script
+│   ├── config/              # DB and app config
+│   ├── constants/           # Shared constants
+│   ├── middleware/          # Express middlewares
+│   ├── models/              # Mongoose models (User, SimpleUser, Event)
+│   ├── routes/              # API routes
+│   ├── services/            # Business logic
+│   ├── utils/               # Helpers
+│   ├── seed.js              # Demo data seeder
+│   └── package.json         # Backend dependencies/scripts
+│
+├── client/                  # Frontend (Vue 3)
 │   ├── src/
-│   │   ├── components/   # Vue components
-│   │   ├── composables/  # Reusable logic
-│   │   ├── views/        # Page components
-│   │   ├── stores/       # Pinia stores
-│   │   ├── router/       # Route configuration
-│   │   └── utils/        # Helper functions
-│   └── public/           # Static assets
+│   │   ├── assets/          # Static assets (css, svg)
+│   │   ├── components/      # Vue components
+│   │   ├── composables/     # Vue composables
+│   │   ├── config/          # Frontend config
+│   │   ├── constants/       # Frontend constants
+│   │   ├── router/          # Vue Router config
+│   │   ├── services/        # API services
+│   │   ├── stores/          # Pinia stores
+│   │   ├── utils/           # Helpers
+│   │   └── views/           # Page views
+│   ├── public/              # Static public files
+│   ├── package.json         # Frontend dependencies/scripts
+│   └── vite.config.js       # Vite config
+│
+└── README.md                # Project documentation
 ```
+
+## 🚀 Demo Configuration
+
+The project includes a ready-to-use demo configuration for quick start and testing:
+
+- 1 admin user:
+  - **Email:** admin@example.com
+  - **Password:** admin
+- 15 demo SimpleUsers (owned by admin)
+- 35 random Events (assigned to SimpleUsers)
+
+To generate demo data, use the seed script (see below).
+
+---
 
 ## 🚀 Getting Started
 
@@ -106,11 +175,13 @@ A modern full-stack CRUD application for managing users and events, built with N
    JWT_EXPIRE=30d
    ```
 
-5. **Seed the database (optional)**
+
+5. **Seed the database with demo data**
    ```bash
    cd server
    node seed.js
    ```
+   > After this step, you can log in as admin@example.com / admin and see demo users and events in the UI.
 
 ### Running the Application
 
@@ -202,18 +273,6 @@ npm start
 - **CORS Protection** with configured origins
 - **Route Protection** with authentication middleware
 
-## 🧪 Testing
-
-### Manual Testing
-- Use the included test page: `/logout-test.html`
-- Test all CRUD operations through the UI
-- Verify authentication flows
-
-### Automated Testing (TODO)
-- Unit tests for services and composables
-- Integration tests for API endpoints
-- E2E tests for user workflows
-
 ## 🚀 Deployment
 
 ### Environment Variables
@@ -222,10 +281,6 @@ Ensure these are set in production:
 - `MONGODB_URI` - Your MongoDB connection string
 - `JWT_SECRET` - Strong secret key
 - `PORT` - Server port (default: 5000)
-
-### Docker Support (TODO)
-- Dockerfile for containerization
-- Docker Compose for full stack deployment
 
 ## 🤝 Contributing
 
@@ -238,10 +293,6 @@ Ensure these are set in production:
 ## 📝 License
 
 This project is licensed under the MIT License.
-
-## 📞 Support
-
-For questions or issues, please create an issue in the repository.
 
 ---
 
