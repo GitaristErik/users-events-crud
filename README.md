@@ -11,32 +11,32 @@ Features beautiful UI design, smooth animations, unique and stylish modal window
 
 
 <p align="center">
-  <img src="client/src/assets/preview.png" alt="Main app preview" width="700"/>
+  <img src="assets/preview.png" alt="Main app preview" width="700"/>
 </p>
 
 <p align="center">
-  <img src="client/src/assets/auth.png" alt="Login screen" width="340"/>
-  <img src="client/src/assets/auth2.png" alt="Register screen" width="340"/>
+  <img src="assets/auth.png" alt="Login screen" width="340"/>
+  <img src="assets/auth2.png" alt="Register screen" width="340"/>
 </p>
 <p align="center">
-  <img src="client/src/assets/auth3.png" alt="Profile screen" width="700"/>
+  <img src="assets/auth3.png" alt="Profile screen" width="700"/>
 </p>
 <p align="center">
-  <img src="client/src/assets/events.png" alt="Events screen" width="700"/>
+  <img src="assets/events.png" alt="Events screen" width="700"/>
 </p>
 <p align="center">
-  <img src="client/src/assets/user.png" alt="User's events screen" width="340"/>
+  <img src="assets/user.png" alt="User's events screen" width="700"/>
 </p>
 
 **Demo video:**
 
 <p align="center">
-  <video src="client/src/assets/demo.mkv" controls width="700" poster="client/src/assets/preview.png">
+  <video src="assets/demo.mkv" controls width="700" poster="assets/preview.png">
     Your browser does not support the video tag.
   </video>
 </p>
 
-> _The video is located in `client/src/assets/demo.mkv`. If Markdown/README does not display the video, open the file directly or view it in the repository._
+> _The video is located in `assets/demo.mkv`. If Markdown/README does not display the video, open the file directly or view it in the repository._
 
 ## 🚀 Features
 
