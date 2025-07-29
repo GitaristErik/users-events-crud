@@ -21,13 +21,13 @@ const eventValidation = [
     .withMessage('Title is required')
     .isLength({ min: 3, max: 100 })
     .withMessage('Title must be between 3 and 100 characters'),
-  
+
   body('description')
     .optional()
     .trim()
     .isLength({ max: 500 })
     .withMessage('Description cannot exceed 500 characters'),
-  
+
   body('startDate')
     .notEmpty()
     .withMessage('Start date is required')
@@ -39,7 +39,7 @@ const eventValidation = [
       }
       return true;
     }),
-  
+
   body('endDate')
     .notEmpty()
     .withMessage('End date is required')
@@ -51,13 +51,13 @@ const eventValidation = [
       }
       return true;
     }),
-  
+
   body('userId')
     .notEmpty()
     .withMessage('User ID is required')
     .isMongoId()
     .withMessage('User ID must be a valid MongoDB ObjectId'),
-  
+
   handleValidationErrors
 ];
 
@@ -85,7 +85,7 @@ const simpleUserValidation = [
   body('phoneNumber')
     .optional()
     .trim()
-    .matches(/^[\+]?[1-9][\d\s\-\(\)]{7,15}$/)
+    .matches(/^[+]?[1-9][\d\s\-()]{7,15}$/)
     .withMessage('Phone number must be valid'),
   handleValidationErrors
 ];
@@ -173,15 +173,15 @@ const changePasswordValidation = [
     .isEmail()
     .withMessage('Email must be valid')
     .normalizeEmail(),
-  
+
   body('currentPassword')
     .notEmpty()
     .withMessage('Current password is required'),
-  
+
   body('newPassword')
     .isLength({ min: 6, max: 100 })
     .withMessage('New password must be between 6 and 100 characters'),
-  
+
   handleValidationErrors
 ];
 

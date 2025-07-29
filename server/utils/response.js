@@ -9,12 +9,12 @@ const sendSuccess = (res, data = null, message = 'Success', statusCode = 200) =>
     message,
     data
   };
-  
+
   // Remove data field if null
   if (data === null) {
     delete response.data;
   }
-  
+
   return res.status(statusCode).json(response);
 };
 
@@ -24,12 +24,12 @@ const sendError = (res, error, statusCode = 500) => {
     success: false,
     message: error.message || 'Internal server error'
   };
-  
+
   // Add error details if provided
   if (error.errors) {
     response.errors = error.errors;
   }
-  
+
   return res.status(statusCode).json(response);
 };
 
@@ -41,7 +41,7 @@ const asyncHandler = (fn) => (req, res, next) => {
 // Global error handler middleware
 const errorHandler = (err, req, res, next) => {
   console.error('Error:', err);
-  
+
   // Mongoose validation error
   if (err.name === 'ValidationError') {
     const errors = Object.values(err.errors).map(e => ({
@@ -50,27 +50,27 @@ const errorHandler = (err, req, res, next) => {
     }));
     return sendError(res, { message: 'Validation failed', errors }, 400);
   }
-  
+
   // Mongoose duplicate key error
   if (err.code === 11000) {
     const field = Object.keys(err.keyValue)[0];
     return sendError(res, { message: `${field} already exists` }, 400);
   }
-  
+
   // Mongoose ObjectId error
   if (err.name === 'CastError') {
     return sendError(res, { message: 'Invalid ID format' }, 400);
   }
-  
+
   // JWT errors
   if (err.name === 'JsonWebTokenError') {
     return sendError(res, { message: 'Invalid token' }, 401);
   }
-  
+
   if (err.name === 'TokenExpiredError') {
     return sendError(res, { message: 'Token expired' }, 401);
   }
-  
+
   // Default error
   sendError(res, err, err.statusCode || 500);
 };

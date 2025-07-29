@@ -23,7 +23,7 @@ class UserService {
    */
   static async getAllUsersWithStats(ownerId) {
     const users = await User.find({ owner: ownerId }).lean();
-    const result = await Promise.all(users.map(async (user) => {
+    const result = await Promise.all(users.map(async(user) => {
       const allEvents = await EventService.getUserEvents(user._id);
       const upcomingEvents = await EventService.getUpcomingEvents(user._id, 1);
       return {

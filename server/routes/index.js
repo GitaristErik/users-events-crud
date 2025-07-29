@@ -1,8 +1,8 @@
-var express = require('express');
-var router = express.Router();
+const express = require('express');
+const router = express.Router();
 
 /* GET API status */
-router.get('/', function(req, res, next) {
+router.get('/', (req, res, next) => {
   res.json({ message: 'Users Events API Server', status: 'running' });
 });
 

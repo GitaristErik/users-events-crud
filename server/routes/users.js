@@ -10,7 +10,7 @@ const UserService = require('../services/UserService');
  * @desc    Create a new user
  * @access  Private
  */
-router.post('/', auth, ...simpleUserValidation, asyncHandler(async (req, res) => {
+router.post('/', auth, ...simpleUserValidation, asyncHandler(async(req, res) => {
   const user = await UserService.createUser(req.body, req.user.id);
   sendSuccess(res, user, 'User created successfully', 201);
 }));
@@ -20,7 +20,7 @@ router.post('/', auth, ...simpleUserValidation, asyncHandler(async (req, res) =>
  * @desc    Get all users with events statistics
  * @access  Private
  */
-router.get('/', auth, asyncHandler(async (req, res) => {
+router.get('/', auth, asyncHandler(async(req, res) => {
   const users = await UserService.getAllUsersWithStats(req.user.id);
   sendSuccess(res, users);
 }));
@@ -30,7 +30,7 @@ router.get('/', auth, asyncHandler(async (req, res) => {
  * @desc    Get user profile with events
  * @access  Private
  */
-router.get('/:id', auth, asyncHandler(async (req, res) => {
+router.get('/:id', auth, asyncHandler(async(req, res) => {
   const userProfile = await UserService.getUserProfile(req.params.id, req.user.id);
   sendSuccess(res, userProfile);
 }));
@@ -40,7 +40,7 @@ router.get('/:id', auth, asyncHandler(async (req, res) => {
  * @desc    Update user
  * @access  Private
  */
-router.put('/:id', auth, ...simpleUserValidation, asyncHandler(async (req, res) => {
+router.put('/:id', auth, ...simpleUserValidation, asyncHandler(async(req, res) => {
   const user = await UserService.updateUser(req.params.id, req.body, req.user.id);
   sendSuccess(res, user, 'User updated successfully');
 }));
@@ -50,7 +50,7 @@ router.put('/:id', auth, ...simpleUserValidation, asyncHandler(async (req, res) 
  * @desc    Delete user and all their events
  * @access  Private
  */
-router.delete('/:id', auth, asyncHandler(async (req, res) => {
+router.delete('/:id', auth, asyncHandler(async(req, res) => {
   await UserService.deleteUser(req.params.id, req.user.id);
   sendSuccess(res, null, 'User deleted successfully');
 }));

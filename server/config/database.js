@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 
-const connectDB = async () => {
+const connectDB = async() => {
   try {
     const conn = await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/users-events-crud', {
       // Remove deprecated options
@@ -27,7 +27,7 @@ mongoose.connection.on('disconnected', () => {
 });
 
 // Handle app termination
-process.on('SIGINT', async () => {
+process.on('SIGINT', async() => {
   try {
     await mongoose.connection.close();
     console.log('MongoDB connection closed through app termination');

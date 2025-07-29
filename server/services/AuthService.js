@@ -88,7 +88,7 @@ class AuthService {
    */
   static async getCurrentUser(userId) {
     const user = await User.findById(userId).select('-password');
-    
+
     if (!user) {
       const error = new Error('User not found');
       error.statusCode = 404;

@@ -10,48 +10,48 @@ const generateToken = (userId) => {
 };
 
 // Authentication middleware
-const auth = async (req, res, next) => {
+const auth = async(req, res, next) => {
   try {
     const token = req.header('Authorization')?.replace('Bearer ', '');
-    
+
     if (!token) {
-      return res.status(401).json({ 
-        error: 'Access denied. No token provided.' 
+      return res.status(401).json({
+        error: 'Access denied. No token provided.'
       });
     }
 
     const decoded = jwt.verify(token, JWT_SECRET);
     const user = await User.findById(decoded.userId).select('-password');
-    
+
     if (!user || !user.isActive) {
-      return res.status(401).json({ 
-        error: 'Invalid token or user deactivated.' 
+      return res.status(401).json({
+        error: 'Invalid token or user deactivated.'
       });
     }
 
     req.user = user;
     next();
   } catch (error) {
-    res.status(401).json({ 
-      error: 'Invalid token.' 
+    res.status(401).json({
+      error: 'Invalid token.'
     });
   }
 };
 
 // Optional authentication middleware (doesn't fail if no token)
-const optionalAuth = async (req, res, next) => {
+const optionalAuth = async(req, res, next) => {
   try {
     const token = req.header('Authorization')?.replace('Bearer ', '');
-    
+
     if (token) {
       const decoded = jwt.verify(token, JWT_SECRET);
       const user = await User.findById(decoded.userId).select('-password');
-      
+
       if (user && user.isActive) {
         req.user = user;
       }
     }
-    
+
     next();
   } catch (error) {
     // Continue without authentication
@@ -62,17 +62,17 @@ const optionalAuth = async (req, res, next) => {
 // Admin role middleware
 const adminAuth = (req, res, next) => {
   if (!req.user) {
-    return res.status(401).json({ 
-      error: 'Access denied. Authentication required.' 
+    return res.status(401).json({
+      error: 'Access denied. Authentication required.'
     });
   }
-  
+
   if (req.user.role !== 'admin') {
-    return res.status(403).json({ 
-      error: 'Access denied. Admin role required.' 
+    return res.status(403).json({
+      error: 'Access denied. Admin role required.'
     });
   }
-  
+
   next();
 };
 

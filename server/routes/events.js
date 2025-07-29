@@ -10,7 +10,7 @@ const EventService = require('../services/EventService');
  * @desc    Get all events with optional user filter
  * @access  Private
  */
-router.get('/', auth, asyncHandler(async (req, res) => {
+router.get('/', auth, asyncHandler(async(req, res) => {
   const { userId } = req.query;
   const events = await EventService.getAllEvents(userId, req.user.id);
   sendSuccess(res, events);
@@ -21,7 +21,7 @@ router.get('/', auth, asyncHandler(async (req, res) => {
  * @desc    Get event by ID
  * @access  Private
  */
-router.get('/:id', auth, asyncHandler(async (req, res) => {
+router.get('/:id', auth, asyncHandler(async(req, res) => {
   const event = await EventService.getEventById(req.params.id, req.user.id);
   sendSuccess(res, event);
 }));
@@ -31,7 +31,7 @@ router.get('/:id', auth, asyncHandler(async (req, res) => {
  * @desc    Create a new event
  * @access  Private
  */
-router.post('/', auth, eventValidation, asyncHandler(async (req, res) => {
+router.post('/', auth, eventValidation, asyncHandler(async(req, res) => {
   const event = await EventService.createEvent(req.body, req.user.id);
   sendSuccess(res, event, 'Event created successfully', 201);
 }));
@@ -41,7 +41,7 @@ router.post('/', auth, eventValidation, asyncHandler(async (req, res) => {
  * @desc    Update an event
  * @access  Private
  */
-router.put('/:id', auth, eventValidation, asyncHandler(async (req, res) => {
+router.put('/:id', auth, eventValidation, asyncHandler(async(req, res) => {
   const event = await EventService.updateEvent(req.params.id, req.body, req.user.id);
   sendSuccess(res, event, 'Event updated successfully');
 }));
@@ -51,7 +51,7 @@ router.put('/:id', auth, eventValidation, asyncHandler(async (req, res) => {
  * @desc    Delete an event
  * @access  Private
  */
-router.delete('/:id', auth, asyncHandler(async (req, res) => {
+router.delete('/:id', auth, asyncHandler(async(req, res) => {
   await EventService.deleteEvent(req.params.id, req.user.id);
   sendSuccess(res, null, 'Event deleted successfully');
 }));
