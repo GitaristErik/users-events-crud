@@ -1,5 +1,5 @@
 const Event = require('../models/Event');
-const User = require('../models/User');
+const SimpleUser = require('../models/SimpleUser');
 
 class EventService {
   /**
@@ -24,26 +24,43 @@ class EventService {
   }
 
   /**
-   * Get all events with optional user filter
+   * Get all events with optional user filter and owner filter
    */
-  static async getAllEvents(userId = null) {
-    const filter = userId ? { userId } : {};
+  static async getAllEvents(userId = null, ownerId = null) {
+    let filter = {};
     
-    return await Event.find(filter)
-      .populate('userId', 'firstName lastName email')
-      .sort({ startDate: 1 })
-      .lean();
+    if (userId) {
+      filter.userId = userId;
+    }
+    
+    let query = Event.find(filter)
+      .populate('userId', 'firstName lastName email owner')
+      .sort({ startDate: 1 });
+    
+    const events = await query.lean();
+    
+    // Filter by owner if provided
+    if (ownerId) {
+      return events.filter(event => event.userId && event.userId.owner.toString() === ownerId.toString());
+    }
+    
+    return events;
   }
 
   /**
-   * Get event by ID
+   * Get event by ID with owner verification
    */
-  static async getEventById(eventId) {
+  static async getEventById(eventId, ownerId = null) {
     const event = await Event.findById(eventId)
-      .populate('userId', 'firstName lastName email')
+      .populate('userId', 'firstName lastName email owner')
       .lean();
       
     if (!event) {
+      throw new Error('Event not found');
+    }
+    
+    // Verify owner if provided
+    if (ownerId && event.userId && event.userId.owner.toString() !== ownerId.toString()) {
       throw new Error('Event not found');
     }
     
@@ -53,11 +70,11 @@ class EventService {
   /**
    * Create a new event
    */
-  static async createEvent(eventData) {
+  static async createEvent(eventData, ownerId) {
     const { title, description, startDate, endDate, userId } = eventData;
 
-    // Check if user exists
-    const user = await User.findById(userId);
+    // Check if user exists and belongs to the owner
+    const user = await SimpleUser.findOne({ _id: userId, owner: ownerId });
     if (!user) {
       const error = new Error('User not found');
       error.statusCode = 404;
@@ -82,13 +99,27 @@ class EventService {
   /**
    * Update an event
    */
-  static async updateEvent(eventId, eventData) {
+  static async updateEvent(eventId, eventData, ownerId) {
     const { title, description, startDate, endDate, userId } = eventData;
 
-    // Check if user exists
-    const user = await User.findById(userId);
+    // Check if user exists and belongs to the owner
+    const user = await SimpleUser.findOne({ _id: userId, owner: ownerId });
     if (!user) {
       const error = new Error('User not found');
+      error.statusCode = 404;
+      throw error;
+    }
+
+    // Verify event belongs to owner's user
+    const existingEvent = await Event.findById(eventId).populate('userId');
+    if (!existingEvent) {
+      const error = new Error('Event not found');
+      error.statusCode = 404;
+      throw error;
+    }
+    
+    if (existingEvent.userId.owner.toString() !== ownerId.toString()) {
+      const error = new Error('Event not found');
       error.statusCode = 404;
       throw error;
     }
@@ -107,27 +138,28 @@ class EventService {
       { new: true, runValidators: true }
     ).populate('userId', 'firstName lastName email');
 
-    if (!event) {
-      const error = new Error('Event not found');
-      error.statusCode = 404;
-      throw error;
-    }
-
     return event;
   }
 
   /**
    * Delete an event
    */
-  static async deleteEvent(eventId) {
-    const event = await Event.findByIdAndDelete(eventId);
-    
+  static async deleteEvent(eventId, ownerId) {
+    // Verify event belongs to owner's user
+    const event = await Event.findById(eventId).populate('userId');
     if (!event) {
       const error = new Error('Event not found');
       error.statusCode = 404;
       throw error;
     }
     
+    if (event.userId.owner.toString() !== ownerId.toString()) {
+      const error = new Error('Event not found');
+      error.statusCode = 404;
+      throw error;
+    }
+    
+    await Event.findByIdAndDelete(eventId);
     return event;
   }
 
