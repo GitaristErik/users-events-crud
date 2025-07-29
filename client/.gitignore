@@ -28,3 +28,21 @@ coverage
 *.sw?
 
 *.tsbuildinfo
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Vue specific
+.temp/
+.cache/
+
+# Build outputs
+build/
+
+# OS generated files
+Thumbs.db
+ehthumbs.db
