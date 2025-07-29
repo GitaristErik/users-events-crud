@@ -1,32 +1,57 @@
 <template>
   <div class="form-wrapper">
-    <h3 class="form-title">👤 Create New User</h3>
+    <div class="form-header">
+      <h3 class="form-title">👤 Create New User</h3>
+      <div class="form-divider"></div>
+    </div>
+
+    <!-- Error Messages -->
+    <div v-if="hasErrors" class="message error">
+      <div class="error-main">{{ formattedErrors }}</div>
+      <ul v-if="errors.length > 0" class="error-details">
+        <li v-for="error in errors" :key="error.field || error.message">
+          {{ error.field ? `${error.field}: ${error.message}` : error.message }}
+        </li>
+      </ul>
+    </div>
+
+    <!-- Success Message -->
+    <div v-if="successMsg" class="message success">{{ successMsg }}</div>
+
     <form @submit.prevent="createUser" class="modern-form">
       <div class="form-grid">
         <div class="input-group">
-          <label for="firstName">First Name</label>
+          <label for="firstName">First Name *</label>
           <input
             id="firstName"
             v-model="form.firstName"
             placeholder="Enter first name"
             required
             class="form-input"
+            :class="{ 'form-input--error': hasFieldError('firstName') }"
           />
+          <div v-if="hasFieldError('firstName')" class="field-error">
+            {{ getFieldError('firstName') }}
+          </div>
         </div>
 
         <div class="input-group">
-          <label for="lastName">Last Name</label>
+          <label for="lastName">Last Name *</label>
           <input
             id="lastName"
             v-model="form.lastName"
             placeholder="Enter last name"
             required
             class="form-input"
+            :class="{ 'form-input--error': hasFieldError('lastName') }"
           />
+          <div v-if="hasFieldError('lastName')" class="field-error">
+            {{ getFieldError('lastName') }}
+          </div>
         </div>
 
         <div class="input-group">
-          <label for="email">Email</label>
+          <label for="email">Email *</label>
           <input
             id="email"
             v-model="form.email"
@@ -34,143 +59,148 @@
             placeholder="Enter email address"
             required
             class="form-input"
+            :class="{ 'form-input--error': hasFieldError('email') }"
           />
+          <div v-if="hasFieldError('email')" class="field-error">
+            {{ getFieldError('email') }}
+          </div>
         </div>
 
         <div class="input-group">
-          <label for="phone">Phone Number</label>
+          <label for="phone">Phone Number *</label>
           <input
             id="phone"
             v-model="form.phoneNumber"
             placeholder="Enter phone number"
             required
             class="form-input"
+            :class="{ 'form-input--error': hasFieldError('phoneNumber') }"
           />
+          <div v-if="hasFieldError('phoneNumber')" class="field-error">
+            {{ getFieldError('phoneNumber') }}
+          </div>
         </div>
       </div>
 
-      <button type="submit" class="btn btn-primary">
-        ✓ Save User
+      <button type="submit" class="btn btn--primary" :disabled="isSubmitting">
+        <span>{{ isSubmitting ? '⏳' : '✓' }}</span>
+        {{ isSubmitting ? 'Saving...' : 'Save User' }}
       </button>
     </form>
   </div>
 </template>
 
 <script setup>
-import { reactive } from 'vue';
-import axios from 'axios';
-const emit = defineEmits(['created']);
+import { reactive, ref } from 'vue'
+import { useApi } from '@/composables/useApi'
+import { useErrorHandling } from '@/composables/useErrorHandling'
+import { useFormValidation } from '@/composables/useFormValidation'
+
+const emit = defineEmits(['created'])
+
+// Composables
+const { createUser: apiCreateUser } = useApi()
+const { errors, errorMessage, hasErrors, formattedErrors, setApiError, clearErrors, getFieldError, hasFieldError } = useErrorHandling()
+const { validateUser, isFormValid } = useFormValidation()
 
 const form = reactive({
   firstName: '',
   lastName: '',
   email: '',
   phoneNumber: ''
-});
+})
 
-const createUser = async () => {
-  await axios.post('http://localhost:5000/api/users', form);
-  Object.assign(form, { firstName: '', lastName: '', email: '', phoneNumber: '' });
-  emit('created');
-};
+const successMsg = ref('')
+const isSubmitting = ref(false)
+
+const resetForm = () => {
+  Object.assign(form, { firstName: '', lastName: '', email: '', phoneNumber: '' })
+  clearErrors()
+  successMsg.value = ''
+}
+
+const createUserHandler = async () => {
+  try {
+    clearErrors()
+    successMsg.value = ''
+    isSubmitting.value = true
+
+    // Validate form
+    const validationErrors = validateUser(form)
+    if (!isFormValid(validationErrors)) {
+      const errorList = Object.entries(validationErrors).map(([field, message]) => ({ field, message }))
+      setApiError({ message: 'Please fix the following errors:', details: errorList })
+      return
+    }
+
+    await apiCreateUser(form)
+    successMsg.value = 'User created successfully!'
+
+    setTimeout(() => {
+      resetForm()
+      emit('created')
+    }, 1500)
+
+  } catch (error) {
+    setApiError(error)
+  } finally {
+    isSubmitting.value = false
+  }
+}
+
+// Alias for template
+// Aliases
+const createUser = createUserHandler
 </script>
 
 <style scoped>
 .form-wrapper {
-  max-width: 600px;
-  margin: 0 auto;
-}
-
-.form-title {
-  margin: 0 0 1.5rem 0;
-  color: #ffffff;
-  font-size: 1.5rem;
-  font-weight: 600;
-  text-align: center;
-}
-
-.modern-form {
-  background: #1a1a2e;
-  padding: 2rem;
-  border-radius: 12px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
-  border: 1px solid #333366;
-}
-
-.form-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1.5rem;
-  margin-bottom: 2rem;
-}
-
-.input-group {
-  display: flex;
-  flex-direction: column;
-}
-
-.input-group label {
-  margin-bottom: 0.5rem;
-  color: #e2e8f0;
-  font-weight: 500;
-  font-size: 0.875rem;
-}
-
-.form-input {
-  padding: 0.75rem 1rem;
-  border: 2px solid #333366;
-  border-radius: 8px;
-  font-size: 0.875rem;
-  transition: all 0.2s ease;
-  background: #0f0f23;
-  color: #ffffff;
-}
-
-.form-input:focus {
-  outline: none;
-  border-color: #667eea;
-  background: #16213e;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-}
-
-.form-input::placeholder {
-  color: #6b7280;
-}
-
-.btn {
+  margin: 0;
   width: 100%;
-  padding: 0.875rem 1.5rem;
-  border: none;
-  border-radius: 8px;
-  font-weight: 600;
+}
+
+.form-input--error {
+  border-color: var(--status-error);
+  box-shadow: 0 0 0 3px var(--status-error-alpha);
+}
+
+.field-error {
+  color: var(--status-error);
   font-size: 0.875rem;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
+  margin-top: var(--spacing-xs);
 }
 
-.btn-primary {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  box-shadow: 0 4px 6px rgba(102, 126, 234, 0.25);
+.message {
+  margin-bottom: var(--spacing-lg);
+  padding: var(--spacing-md);
+  border-radius: var(--radius-md);
+  border-left: 4px solid;
 }
 
-.btn-primary:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 15px rgba(102, 126, 234, 0.35);
+.message.error {
+  background: var(--status-error-bg);
+  border-color: var(--status-error);
+  color: var(--status-error-text);
+}
+
+.message.success {
+  background: var(--status-success-bg);
+  border-color: var(--status-success);
+  color: var(--status-success-text);
+}
+
+.error-details {
+  margin: var(--spacing-sm) 0 0 0;
+  padding-left: var(--spacing-lg);
+}
+
+.error-details li {
+  margin-bottom: var(--spacing-xs);
 }
 
 @media (max-width: 768px) {
-  .form-grid {
-    grid-template-columns: 1fr;
-    gap: 1rem;
-  }
-
-  .modern-form {
-    padding: 1.5rem;
+  .form-wrapper {
+    margin: 0;
   }
 }
 </style>

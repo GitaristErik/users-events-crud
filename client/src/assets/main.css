@@ -1,21 +1,16 @@
 @import './base.css';
+@import './globals.css';
 
-#app {
-  width: 100vw;
-  margin: 0;
-  padding: 0;
-  font-weight: normal;
-  background: #0f0f23;
-  min-height: 100vh;
-}
-
+/* ==================== PRESERVE ORIGINAL APP STYLES ==================== */
+/* Only override what's necessary for dark theme */
 body {
   background: #0f0f23;
   color: #ffffff;
-  margin: 0;
-  padding: 0;
-  width: 100%;
-  overflow-x: hidden;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 a,
@@ -29,18 +24,5 @@ a,
 @media (hover: hover) {
   a:hover {
     background-color: rgba(102, 126, 234, 0.2);
-  }
-}
-
-@media (min-width: 1024px) {
-  body {
-    display: flex;
-    place-items: center;
-  }
-
-  #app {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    padding: 0 2rem;
   }
 }
