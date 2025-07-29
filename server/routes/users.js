@@ -1,54 +1,57 @@
-var express = require('express');
-var router = express.Router();
+const express = require('express');
+const router = express.Router();
+const { asyncHandler, sendSuccess } = require('../utils/response');
+const { userValidation } = require('../middleware/validation');
+const UserService = require('../services/UserService');
 
-const User = require('../models/User');
-const Event = require('../models/Event');
+/**
+ * @route   POST /api/users
+ * @desc    Create a new user
+ * @access  Public
+ */
+router.post('/', userValidation, asyncHandler(async (req, res) => {
+  const user = await UserService.createUser(req.body);
+  sendSuccess(res, user, 'User created successfully', 201);
+}));
 
-// Створити користувача
-router.post('/', async (req, res) => {
-  try {
-    const { firstName, lastName, email, phoneNumber } = req.body;
-    const user = await User.create({ firstName, lastName, email, phoneNumber });
-    res.status(201).json(user);
-  } catch (err) {
-      res.status(400).json({ error: err.message });
-      console.log('Error creating user:', err.message);
-  }
-});
+/**
+ * @route   GET /api/users
+ * @desc    Get all users with events statistics
+ * @access  Public
+ */
+router.get('/', asyncHandler(async (req, res) => {
+  const users = await UserService.getAllUsersWithStats();
+  sendSuccess(res, users);
+}));
 
-// Отримати список користувачів з Events Count та Next Event Date
-router.get('/', async (req, res) => {
-  try {
-    const users = await User.find();
+/**
+ * @route   GET /api/users/:id
+ * @desc    Get user profile with events
+ * @access  Public
+ */
+router.get('/:id', asyncHandler(async (req, res) => {
+  const userProfile = await UserService.getUserProfile(req.params.id);
+  sendSuccess(res, userProfile);
+}));
 
-    const result = await Promise.all(users.map(async (user) => {
-      const events = await Event.find({ userId: user._id }).sort({ startDate: 1 });
-      return {
-        _id: user._id,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        email: user.email,
-        phoneNumber: user.phoneNumber,
-        eventsCount: events.length,
-        nextEventDate: events.length > 0 ? events[0].startDate : null
-      };
-    }));
+/**
+ * @route   PUT /api/users/:id
+ * @desc    Update user
+ * @access  Public
+ */
+router.put('/:id', userValidation, asyncHandler(async (req, res) => {
+  const user = await UserService.updateUser(req.params.id, req.body);
+  sendSuccess(res, user, 'User updated successfully');
+}));
 
-    res.json(result);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// Отримати профіль користувача з подіями
-router.get('/:id', async (req, res) => {
-  try {
-    const user = await User.findById(req.params.id);
-    const events = await Event.find({ userId: user._id }).sort({ startDate: 1 });
-    res.json({ user, events });
-  } catch (err) {
-    res.status(404).json({ error: 'User not found' });
-  }
-});
+/**
+ * @route   DELETE /api/users/:id
+ * @desc    Delete user and all their events
+ * @access  Public
+ */
+router.delete('/:id', asyncHandler(async (req, res) => {
+  await UserService.deleteUser(req.params.id);
+  sendSuccess(res, null, 'User deleted successfully');
+}));
 
 module.exports = router;
