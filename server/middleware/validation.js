@@ -61,22 +61,20 @@ const eventValidation = [
   handleValidationErrors
 ];
 
-// User validation rules
-const userValidation = [
+
+// SimpleUser validation rules (for CRUD operations)
+const simpleUserValidation = [
   body('firstName')
     .trim()
     .notEmpty()
     .withMessage('First name is required')
     .isLength({ min: 2, max: 50 })
     .withMessage('First name must be between 2 and 50 characters'),
-  
   body('lastName')
+    .optional()
     .trim()
-    .notEmpty()
-    .withMessage('Last name is required')
     .isLength({ min: 2, max: 50 })
     .withMessage('Last name must be between 2 and 50 characters'),
-  
   body('email')
     .trim()
     .notEmpty()
@@ -84,16 +82,15 @@ const userValidation = [
     .isEmail()
     .withMessage('Email must be valid')
     .normalizeEmail(),
-  
   body('phoneNumber')
+    .optional()
     .trim()
-    .notEmpty()
-    .withMessage('Phone number is required')
-    .isMobilePhone()
+    .matches(/^[\+]?[1-9][\d\s\-\(\)]{7,15}$/)
     .withMessage('Phone number must be valid'),
-  
   handleValidationErrors
 ];
+
+
 
 // Auth validation rules
 const registerValidation = [
@@ -103,14 +100,11 @@ const registerValidation = [
     .withMessage('First name is required')
     .isLength({ min: 2, max: 50 })
     .withMessage('First name must be between 2 and 50 characters'),
-  
   body('lastName')
+    .optional()
     .trim()
-    .notEmpty()
-    .withMessage('Last name is required')
     .isLength({ min: 2, max: 50 })
     .withMessage('Last name must be between 2 and 50 characters'),
-  
   body('email')
     .trim()
     .notEmpty()
@@ -118,13 +112,9 @@ const registerValidation = [
     .isEmail()
     .withMessage('Email must be valid')
     .normalizeEmail(),
-  
   body('password')
     .isLength({ min: 6, max: 100 })
-    .withMessage('Password must be between 6 and 100 characters')
-    .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/)
-    .withMessage('Password must contain at least one lowercase letter, one uppercase letter, and one number'),
-  
+    .withMessage('Password must be between 6 and 100 characters'),
   handleValidationErrors
 ];
 
@@ -136,11 +126,9 @@ const loginValidation = [
     .isEmail()
     .withMessage('Email must be valid')
     .normalizeEmail(),
-  
   body('password')
     .notEmpty()
     .withMessage('Password is required'),
-  
   handleValidationErrors
 ];
 
@@ -151,14 +139,33 @@ const updateProfileValidation = [
     .withMessage('First name is required')
     .isLength({ min: 2, max: 50 })
     .withMessage('First name must be between 2 and 50 characters'),
-  
   body('lastName')
+    .optional()
     .trim()
-    .notEmpty()
-    .withMessage('Last name is required')
     .isLength({ min: 2, max: 50 })
     .withMessage('Last name must be between 2 and 50 characters'),
-  
+  body('email')
+    .trim()
+    .notEmpty()
+    .withMessage('Email is required')
+    .isEmail()
+    .withMessage('Email must be valid')
+    .normalizeEmail(),
+  handleValidationErrors
+];
+
+const changePasswordValidation = [
+  body('firstName')
+    .trim()
+    .notEmpty()
+    .withMessage('First name is required')
+    .isLength({ min: 2, max: 50 })
+    .withMessage('First name must be between 2 and 50 characters'),
+  body('lastName')
+    .optional()
+    .trim()
+    .isLength({ min: 2, max: 50 })
+    .withMessage('Last name must be between 2 and 50 characters'),
   body('email')
     .trim()
     .notEmpty()
@@ -167,28 +174,20 @@ const updateProfileValidation = [
     .withMessage('Email must be valid')
     .normalizeEmail(),
   
-  handleValidationErrors
-];
-
-const changePasswordValidation = [
-  ...updateProfileValidation.slice(0, -1), // Reuse profile validation without handleValidationErrors
-  
   body('currentPassword')
     .notEmpty()
     .withMessage('Current password is required'),
   
   body('newPassword')
     .isLength({ min: 6, max: 100 })
-    .withMessage('New password must be between 6 and 100 characters')
-    .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/)
-    .withMessage('New password must contain at least one lowercase letter, one uppercase letter, and one number'),
+    .withMessage('New password must be between 6 and 100 characters'),
   
   handleValidationErrors
 ];
 
 module.exports = {
   eventValidation,
-  userValidation,
+  simpleUserValidation,
   registerValidation,
   loginValidation,
   updateProfileValidation,
